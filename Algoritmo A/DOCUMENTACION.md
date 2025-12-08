@@ -27,8 +27,8 @@ Esta pequeña aplicación visualiza la ejecución del algoritmo A* sobre una cua
   - ESPACIO: iniciar la ejecución del algoritmo A*
   - C: limpiar el tablero (restablecer inicio/fin/paredes)
   - R: reiniciar la ventana a las dimensiones iniciales
-- Durante la ejecución, la aplicación muestra en tiempo real los nodos explorados y colores para distinguir estados (visitado, abierto, camino óptimo, caminos alternativos).
-- Al finalizar la búsqueda se reconstruye y muestra el camino óptimo en verde y, de forma secuencial, los caminos alternativos en azul. En el panel lateral se muestra información (costos, nodo actual y resumen final).
+- Durante la ejecución, la aplicación muestra en tiempo real los nodos explorados y colores para distinguir estados (visitado, abierto, camino óptimo).
+- Al finalizar la búsqueda se reconstruye y muestra el camino óptimo en verde. El algoritmo solo explora los nodos necesarios para encontrar el camino más corto. En el panel lateral se muestra información (costos, nodo actual y resumen final).
 
 Inputs/Outputs:
 - Input: interacciones del usuario (clicks, teclas) para definir inicio/fin/paredes.
@@ -53,14 +53,14 @@ Contrato mínimo:
     - `get_pos()` → devuelve (fila, col)
     - `es_pared()`, `es_inicio()`, `es_fin()` → checks de estado
     - `hacer_inicio()`, `hacer_fin()`, `hacer_pared()`, `hacer_camino()`, `hacer_visitado()`, `hacer_alternativo()`, `hacer_abierto()` → cambian `color`
-    - `actualizar_vecinos(grid)` → recalcula vecinos no bloqueados (arriba/abajo/izq/der)
+    - `actualizar_vecinos(grid)` → recalcula vecinos no bloqueados en 8 direcciones (arriba/abajo/izq/der + 4 diagonales). Para diagonales, verifica que no haya paredes bloqueando el paso en los lados adyacentes. Retorna tuplas (vecino, costo) donde el costo es 1 para ortogonales y ~1.414 para diagonales.
     - `dibujar(ventana)` → dibuja el rectángulo redondeado y, si corresponde, muestra los costos "g" | "h" | "f" centrados en la celda.
 
 - `crear_grid(filas, ancho)`
   - Crea y devuelve una matriz `grid` (lista de listas) de `Nodo` con dimensiones `filas x filas`. Calcula `ancho_nodo` inicial.
 
 - `h(p1, p2)`
-  - Heurística: distancia Manhattan entre posiciones de nodos (admisible para movimientos 4-direcciones).
+  - Heurística: distancia Euclidiana entre posiciones de nodos (admisible para movimientos en 8 direcciones incluyendo diagonales).
 
 - `algoritmo_a_estrella(dibujar_fn, grid, inicio, fin)`
   - Implementación del A* con:
@@ -100,19 +100,22 @@ Resumen rápido:
 Implementación específica en el código:
 - `PriorityQueue` almacena tuplas `(f_score, contador, nodo)`; `contador` evita comparaciones entre nodos si `f_score` empata.
 - `g_score` y `f_score` inicializados a `inf` para todos los nodos salvo `inicio`.
-- Al evaluar un vecino `v` desde `actual` se calcula `temp_g_score = g_score[actual] + 1`.
+- Al evaluar un vecino `v` desde `actual` se calcula `temp_g_score = g_score[actual] + costo_movimiento` (donde costo_movimiento es 1 para ortogonales o ~1.414 para diagonales).
   - Si `temp_g_score < g_score[v]`, se ha encontrado un mejor camino hacia `v`, se actualiza `vino_de[v] = actual`, `g_score[v]`, `f_score[v]`.
   - Si `v` no está en la frontera, se añade y se marca visualmente como abierto (amarillo).
 - `reconstruir_camino` recorre `vino_de` desde `fin` hasta `inicio` marcando el camino final en verde y mostrando la animación.
 
-Caminos alternativos:
-- Mientras se agregan vecinos a la frontera se construyen caminos parciales a partir de `vino_de` y se almacenan en `caminos_alternativos`.
-- Al terminar la búsqueda (camino óptimo encontrado), esos caminos alternativos se muestran secuencialmente en azul; el panel lateral muestra la diferencia de costo con respecto al óptimo.
+Optimización del algoritmo:
+- A* es óptimo por naturaleza: solo explora los nodos necesarios gracias a la heurística.
+- No se calculan ni almacenan caminos alternativos, solo se busca y muestra el camino óptimo.
+- La búsqueda termina en cuanto se alcanza el nodo final, minimizando cálculos innecesarios.
 
 Limitaciones y supuestos:
-- Movimiento permitido: 4 direcciones (N, S, E, W). No hay diagonales.
-- Costo por movimiento: 1 (constante). Si quieres pesos distintos, habría que cambiar la suma en `temp_g_score`.
-- Heurística: Manhattan (admisible y consistente para este grafo simple).
+- Movimiento permitido: 8 direcciones (N, S, E, W, NE, NW, SE, SW). Incluye diagonales.
+- Costo por movimiento: 1 para movimientos ortogonales, ~1.414 (√2) para movimientos diagonales.
+- Movimientos diagonales bloqueados: Si hay paredes en los lados adyacentes, no se permite atravesar la esquina.
+- Heurística: Distancia Euclidiana (admisible y consistente para movimiento en 8 direcciones).
+- Optimización: Solo se exploran los nodos necesarios para encontrar el camino óptimo, no se calculan todos los caminos alternativos.
 
 
 ## 4. Cómo se muestra la información (UI/visualización)
@@ -129,7 +132,6 @@ Limitaciones y supuestos:
   - Amarillo: Nodo abierto (en frontera)
   - Rojo: Nodo visitado / expandido
   - Verde: Camino óptimo encontrado
-  - Azul: Caminos alternativos mostrados secuencialmente
 - Visualización de costos en celdas:
   - Para celdas en estado abierto/visitado se muestra el texto `g|h|f` centrado en la celda
   - El tamaño de la fuente se calcula dinámicamente en `Nodo.dibujar` según el ancho de la celda (mantenemos un mínimo razonable)
@@ -137,7 +139,7 @@ Limitaciones y supuestos:
 - Animaciones y timing:
   - Cada actualización importante llama a `dibujar_fn(info)` para refrescar la interfaz
   - Reconstrucción del camino introduce pausas cortas (`pygame.time.delay(50)`) para que el usuario vea el proceso
-  - Al mostrar caminos alternativos se usa un loop con `pygame.time.get_ticks()` y procesado de eventos para evitar congelamientos y permitir cerrar o redimensionar la ventana durante la animación
+  - Los valores g, h, f se redondean para mejor legibilidad (1 decimal)
 
 
 ## 5. Casos especiales y consideraciones
@@ -148,7 +150,8 @@ Limitaciones y supuestos:
 - Rendimiento: con muchas filas y altas resoluciones, la visibilidad de números puede quedar pequeña. Recomendación: usar FILAS = 20–40 según pantalla.
 - Extensiones fáciles:
   - Soportar pesos diferentes por celda (almacenar `peso` en `Nodo` y usar `g += peso`)
-  - Movimiento diagonal (cambiar vecinos y heurística a Euclidiana o Chebyshev)
+  - Añadir más heurísticas (Chebyshev, Octile distance)
+  - Implementar visualización de la lista abierta y cerrada en tiempo real
 
 
 ## 7. Cómo ejecutar
