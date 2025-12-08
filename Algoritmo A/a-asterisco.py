@@ -213,23 +213,10 @@ def algoritmo_a_estrella(dibujar_fn, grid, inicio, fin):
                 "Camino óptimo (fila,col | h):"
             ]
             
-            # Mostrar solo algunos nodos clave para que quepa en pantalla
-            max_nodos_mostrar = 15
-            if len(camino_completo) <= max_nodos_mostrar:
-                for i, nodo in enumerate(camino_completo):
-                    h_valor = round(h(nodo.get_pos(), fin.get_pos()), 1)
-                    info.append(f"{i+1}. ({nodo.fila},{nodo.col}) | h={h_valor}")
-            else:
-                # Mostrar primeros, algunos del medio y últimos
-                for i in range(5):
-                    nodo = camino_completo[i]
-                    h_valor = round(h(nodo.get_pos(), fin.get_pos()), 1)
-                    info.append(f"{i+1}. ({nodo.fila},{nodo.col}) | h={h_valor}")
-                info.append("...")
-                for i in range(len(camino_completo)-3, len(camino_completo)):
-                    nodo = camino_completo[i]
-                    h_valor = round(h(nodo.get_pos(), fin.get_pos()), 1)
-                    info.append(f"{i+1}. ({nodo.fila},{nodo.col}) | h={h_valor}")
+            # Mostrar TODOS los nodos del camino
+            for i, nodo in enumerate(camino_completo):
+                h_valor = round(h(nodo.get_pos(), fin.get_pos()), 1)
+                info.append(f"{i+1}. ({nodo.fila},{nodo.col}) | h={h_valor}")
             
             dibujar_fn(info)
             return True, [], info, g_score[fin]
@@ -252,7 +239,7 @@ def algoritmo_a_estrella(dibujar_fn, grid, inicio, fin):
                 vecino.h_cost = round(h_cost, 1)
                 
                 if vecino not in conjunto_abierto_hash:
-                    # Poda: calcular si el vecino está en dirección razonable hacia el objetivo
+                    # Poda suave: permitir más flexibilidad para rodear obstáculos
                     vx, vy = vecino.get_pos()
                     fx, fy = fin.get_pos()
                     ax, ay = actual.get_pos()
@@ -269,8 +256,9 @@ def algoritmo_a_estrella(dibujar_fn, grid, inicio, fin):
                     # (producto punto positivo indica ángulo < 90 grados)
                     producto_punto = dir_objetivo_x * dir_vecino_x + dir_objetivo_y * dir_vecino_y
                     
-                    # Permitir cierta tolerancia para rodear obstáculos
-                    if producto_punto >= -1:  # Tolerar hasta ~100 grados de desviación
+                    # Permitir gran tolerancia para rodear obstáculos complejos
+                    # -2 permite hasta ~135 grados de desviación
+                    if producto_punto >= -3 or f_score[vecino] < temp_g_score + h_cost * 1.5:
                         cuenta += 1
                         conjunto_abierto.put((f_score[vecino], cuenta, vecino))
                         conjunto_abierto_hash.add(vecino)
