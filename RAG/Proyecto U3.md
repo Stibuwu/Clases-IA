@@ -1,6 +1,118 @@
 # Dataset y el sistema RAG
 
-## Documentación Técnica del Proyecto
+## Índice General
+
+### [Introducción Visual](#introducción-visual)
+- [Figura 1.0 - Creación del espacio de trabajo AnythingLLM](#figura-10)
+- [Figura 1.1 - Espacio creado con Llama3.2](#figura-11)
+- [Figura 1.3 - Menú principal para incrustar dataset](#figura-13)
+- [Figura 1.4 - Selección del archivo CSV](#figura-14)
+- [Figura 1.5 - Prompt del sistema](#figura-15)
+- [Figura 1.6 - Primera conversación](#figura-16)
+- [Figura 1.7 - Primera pregunta](#figura-17)
+
+### [Documentación Técnica del Proyecto](#documentación-técnica-del-proyecto)
+
+#### [1. A-data.py: Análisis y Preparación del Dataset](#1-a-datapy-análisis-y-preparación-del-dataset)
+- [1.1 Descripción General](#11-descripción-general)
+- [1.2 Fundamento Teórico](#12-fundamento-teórico)
+  - TF-IDF (Term Frequency-Inverse Document Frequency)
+  - Similitud Coseno
+- [1.3 Análisis de la Ejecución y Resultados](#13-análisis-de-la-ejecución-y-resultados)
+  - PASO 1: Carga del Dataset
+  - PASO 2: Análisis de Calidad de Datos
+  - PASO 3: Distribuciones
+  - PASO 4: Limpieza de Datos
+  - PASO 5: Cálculo de Similitud Coseno
+  - PASO 6: Análisis Temático y Conceptual
+- [1.4 Archivos Generados](#14-archivos-generados)
+- [1.5 Conclusiones del Análisis](#15-conclusiones-del-análisis)
+
+#### [2. Vis-Rag.py: Visualización y Análisis Estadístico](#2-vis-ragpy-visualización-y-análisis-estadístico)
+- [2.1 Descripción General](#21-descripción-general)
+- [2.2 Fundamento Teórico de Visualizaciones](#22-fundamento-teórico-de-visualizaciones)
+- [2.3 Análisis de la Ejecución](#23-análisis-de-la-ejecución)
+- [2.4 Resumen Estadístico Final](#24-resumen-estadístico-final)
+- [2.5 Visualización 1: Panel Principal de 9 Gráficos](#25-visualización-1-panel-principal-de-9-gráficos)
+  - Gráfico 1: Distribución por Tema
+  - Gráfico 2: Distribución por Sentimiento
+  - Gráfico 3: Distribución de Longitud de Textos
+  - Gráfico 4: Distribución de Número de Palabras
+  - Gráfico 5: Sentimiento por Tema - Heatmap
+  - Gráfico 6: Distribución Temporal
+  - Gráfico 7: Likes por Sentimiento (Boxplot)
+  - Gráfico 8: Reposts por Sentimiento (Boxplot)
+  - Gráfico 9: Correlación Likes vs Reposts
+- [2.6 Visualización 2: Análisis de Palabras Frecuentes](#26-visualización-2-análisis-de-palabras-frecuentes)
+- [2.7 Visualización 3: Análisis de Similitud](#27-visualización-3-análisis-de-similitud)
+- [2.8 Insights Clave de las Visualizaciones](#28-insights-clave-de-las-visualizaciones)
+- [2.9 Conclusiones y Recomendaciones](#29-conclusiones-y-recomendaciones)
+
+#### [3. Gen-com.py: Generador de Comentarios Sintéticos](#3-gen-compy-generador-de-comentarios-sintéticos)
+- [3.1 Descripción General](#31-descripción-general)
+- [3.2 Fundamento Teórico: Templates Filosóficos](#32-fundamento-teórico-templates-filosóficos)
+  - Estrategia de Generación
+  - 10 Categorías de Templates Filosóficos
+  - Ejemplos de Templates por Categoría
+- [3.3 Metodología de Generación](#33-metodología-de-generación)
+- [3.4 Análisis de Resultados de la Generación](#34-análisis-de-resultados-de-la-generación)
+- [3.5 Análisis de Cobertura Conceptual](#35-análisis-de-cobertura-conceptual)
+  - Comparación Antes/Después
+  - Éxitos de la Generación
+  - Limitaciones Persistentes
+- [3.6 Análisis Filosófico de Templates](#36-análisis-filosófico-de-templates)
+- [3.7 Archivos Generados](#37-archivos-generados)
+- [3.8 Conclusiones y Evaluación Crítica](#38-conclusiones-y-evaluación-crítica)
+
+#### [4. Evaluación y Conclusiones del Sistema RAG](#4-evaluación-y-conclusiones-del-sistema-rag)
+- [4.1 Metodología de Evaluación](#41-metodología-de-evaluación)
+- [4.2 Análisis Categórico de Respuestas](#42-análisis-categórico-de-respuestas)
+  - Categoría A: Conceptos Existenciales
+  - Categoría B: Algoritmos y Autonomía
+  - Categoría C: Rendimiento y Burnout
+  - Categoría D: Hiperconectividad y Soledad
+  - Categoría E: Identidad y Autenticidad
+  - Categoría F: Pensamiento Crítico y Burbujas
+  - Categoría G: Tecnología y Transformación
+- [4.3 Patrones Transversales Identificados](#43-patrones-transversales-identificados)
+- [4.4 Evaluación Cuantitativa Global](#44-evaluación-cuantitativa-global)
+- [4.5 Re-evaluación de Hipótesis Iniciales](#45-re-evaluación-de-hipótesis-iniciales)
+  - Hipótesis 1: Crisis de sentido existencial
+  - Hipótesis 2: Algoritmos y autonomía
+  - Hipótesis 3: Hiperconectividad y soledad
+  - Hipótesis 4: Cultura del rendimiento
+  - Hipótesis 5: Identidad líquida
+  - Hipótesis 6: Vigilancia algorítmica
+- [4.6 Diagnóstico de Limitaciones del Sistema](#46-diagnóstico-de-limitaciones-del-sistema)
+- [4.7 Conclusiones Finales Provisionales](#47-conclusiones-finales-provisionales)
+- [4.8 Reflexiones Finales](#48-reflexiones-finales)
+- [4.9 Calificación Final del Sistema](#49-calificación-final-del-sistema)
+
+### [Todas las Preguntas y Respuestas de AnythingLLM](#todas-las-preguntas-propuestas-mas-las-respuestas-de-anythingllm)
+- [Pregunta 1: Expresiones de vacío existencial](#pregunta-1)
+- [Pregunta 2: Influencia de algoritmos en identidad](#pregunta-2)
+- [Pregunta 3: Emociones asociadas a burnout](#pregunta-3)
+- [Pregunta 4: Percepción de autonomía](#pregunta-4)
+- [Pregunta 5: Discursos auténticos vs performativos](#pregunta-5)
+- [Pregunta 6: Patrones de lenguaje de crisis](#pregunta-6)
+- [Pregunta 7: Identidad líquida en los datos](#pregunta-7)
+- [Pregunta 8: Menciones sobre libertad y control](#pregunta-8)
+- [Pregunta 9: Algoritmos creando deseos/hábitos](#pregunta-9)
+- [Pregunta 10: Preocupaciones sobre propósito de vida](#pregunta-10)
+- [Pregunta 11: Rechazo a metarrelatos](#pregunta-11)
+- [Pregunta 12: Figura del "yo digital"](#pregunta-12)
+- [Pregunta 13: Pérdida de pensamiento crítico](#pregunta-13)
+- [Pregunta 14: Contrastes en la visión de Gen Z](#pregunta-14)
+- [Pregunta 15: Hiperconectividad y ansiedad](#pregunta-15)
+- [Pregunta 16: Ideas de Byung-Chul Han](#pregunta-16)
+- [Pregunta 17: Interpretación foucaultiana](#pregunta-17)
+- [Pregunta 18: Tecnología y desocultamiento (Heidegger)](#pregunta-18)
+- [Pregunta 19: Espacio público digital (Habermas)](#pregunta-19)
+- [Pregunta 20: Miedos, frustraciones y esperanzas](#pregunta-20)
+
+---
+
+## DataSet y RAG
 
 ### 1. A-data.py: Análisis y Preparación del Dataset
 
