@@ -20,22 +20,23 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 warnings.filterwarnings('ignore')
 
 #-------------------------Configuracion Global
-# CONFIGURACIÓN OPTIMIZADA (reducida para evitar congelamiento)
-IMG_SIZE = (64, 64)          # Reducido de 150x150 (usa menos memoria)
-BATCH_SIZE = 16              # Reducido de 32 (más eficiente)
-EPOCHS = 15                  # Reducido de 50 (más rápido)
+# CONFIGURACIÓN AJUSTADA: Imagen más grande para diferenciar mariquita/tortuga
+IMG_SIZE = (128, 128)        # AUMENTADO para capturar más detalles
+BATCH_SIZE = 16              # Reducido por imágenes más grandes
+EPOCHS = 35                  
 LEARNING_RATE = 0.001
-MAX_IMAGES_PER_CLASS = 500   # LÍMITE: máximo 500 imágenes por clase
+MAX_IMAGES_PER_CLASS = 700   # Reducido un poco para velocidad
 
 DATA_DIR = r'Data'
 OUTPUT_DIR = r'sources/completo'  # Carpeta para guardar imágenes generadas
 
+# RUTAS ACTUALIZADAS para dataset2
 CATEGORIAS = {
-    'perro': os.path.join(DATA_DIR, 'perro'),
-    'gato': os.path.join(DATA_DIR, 'gato'),
-    'hormiga': os.path.join(DATA_DIR, 'animals', 'hormiga'),
-    'mariquita': os.path.join(DATA_DIR, 'animals', 'mariquita'),
-    'tortuga': os.path.join(DATA_DIR, 'Turtle_Tortoise')
+    'perro': os.path.join(DATA_DIR, 'dataset2', 'perros'),
+    'gato': os.path.join(DATA_DIR, 'dataset2', 'gatos'),
+    'hormiga': os.path.join(DATA_DIR, 'dataset2', 'hormigas'),
+    'mariquita': os.path.join(DATA_DIR, 'dataset2', 'mariquitas'),
+    'tortuga': os.path.join(DATA_DIR, 'dataset2', 'tortugas')
 }
 
 CLASS_NAMES = list(CATEGORIAS.keys())
@@ -52,7 +53,7 @@ def verificar_dataset():
     
     for nombre, ruta in CATEGORIAS.items():
         if os.path.exists(ruta):
-            num_imgs = len([f for f in os.listdir(ruta) if f.endswith(('.jpg', '.jpeg', '.png'))])
+            num_imgs = len([f for f in os.listdir(ruta) if f.endswith(('.jpg', '.jpeg', '.png', '.webp'))])
             print(f"✓ {nombre:12s}: {num_imgs:5d} imágenes")
         else:
             print(f"✗ {nombre:12s}: Carpeta no encontrada")
@@ -77,7 +78,7 @@ def cargar_imagenes_y_etiquetas():
             continue
             
         archivos = [f for f in os.listdir(ruta_clase) 
-                   if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                   if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
         
         # LIMITADOR: Solo tomar MAX_IMAGES_PER_CLASS imágenes
         archivos = archivos[:MAX_IMAGES_PER_CLASS]
@@ -289,22 +290,27 @@ def visualizar_predicciones(X, y_true, y_pred, num_ejemplos=20):
 
 # ------------------------------------Modelo CNN
 def crear_modelo_cnn(input_shape, num_classes):
-    """Crea modelo CNN OPTIMIZADO (más ligero y rápido)"""
+    """Crea modelo CNN AJUSTADO para mejor diferenciación entre clases"""
     model = models.Sequential([
         # Primera capa convolucional
         layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape, padding='same'),
         layers.MaxPooling2D((2, 2)),
-        layers.Dropout(0.25),
+        layers.Dropout(0.20),  # Reducido
         
-        # Segunda capa convolucional (reducida)
+        # Segunda capa convolucional
         layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
         layers.MaxPooling2D((2, 2)),
-        layers.Dropout(0.25),
+        layers.Dropout(0.20),  # Reducido de 0.25
         
-        # Capas densas (simplificadas)
+        # Tercera capa convolucional
+        layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+        layers.MaxPooling2D((2, 2)),
+        layers.Dropout(0.25),  # Reducido de 0.3
+        
+        # Capas densas
         layers.Flatten(),
-        layers.Dense(128, activation='relu'),
-        layers.Dropout(0.5),
+        layers.Dense(256, activation='relu'),
+        layers.Dropout(0.4),   # Reducido de 0.5
         
         # Capa de salida
         layers.Dense(num_classes, activation='softmax')
@@ -322,12 +328,11 @@ def crear_modelo_cnn(input_shape, num_classes):
 def entrenar_modelo(model, X_train, y_train, X_val, y_val):
     """Entrena el modelo CNN con data augmentation y callbacks"""
     
-    # Data augmentation
+    # Data augmentation MODERADO
     train_datagen = ImageDataGenerator(
         rotation_range=20,
         width_shift_range=0.2,
         height_shift_range=0.2,
-        shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
         fill_mode='nearest'
@@ -336,18 +341,20 @@ def entrenar_modelo(model, X_train, y_train, X_val, y_val):
     # Crear carpeta para modelos
     os.makedirs('models', exist_ok=True)
     
-    # Callbacks (optimizados para detener antes)
+    # Callbacks como el original
     callbacks = [
         EarlyStopping(
-            monitor='val_loss',
-            patience=3,  # Reducido de 10 a 3
+            monitor='val_accuracy',  # CAMBIO: monitorear val_accuracy en vez de val_loss
+            patience=7,
+            mode='max',
             restore_best_weights=True,
             verbose=1
         ),
         ReduceLROnPlateau(
-            monitor='val_loss',
+            monitor='val_accuracy',  # CAMBIO: monitorear val_accuracy
             factor=0.5,
-            patience=2,  # Reducido de 5 a 2
+            patience=3,
+            mode='max',
             min_lr=1e-7,
             verbose=1
         ),
@@ -355,6 +362,7 @@ def entrenar_modelo(model, X_train, y_train, X_val, y_val):
             'models/mejor_modelo_animales.h5',
             monitor='val_accuracy',
             save_best_only=True,
+            mode='max',
             verbose=1
         )
     ]

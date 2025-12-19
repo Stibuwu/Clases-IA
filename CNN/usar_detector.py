@@ -7,35 +7,40 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ============= CONFIGURACIÓN =============
-IMG_SIZE = (64, 64)
+# IMG_SIZE se detectará automáticamente según el modelo
 CLASS_NAMES = ['perro', 'gato', 'hormiga', 'mariquita', 'tortuga']
 OUTPUT_DIR = r'sources/completo'
 
 # ============= CARGAR MODELO =============
 def cargar_modelo(ruta='models/mejor_modelo_animales.h5'):
-    """Carga el modelo ya entrenado"""
+    """Carga el modelo ya entrenado y detecta el tamaño de imagen"""
     if not os.path.exists(ruta):
         print(f"No se encontró el modelo en: {ruta}")
         print("\nModelos disponibles:")
         if os.path.exists('models'):
             for archivo in os.listdir('models'):
                 print(f"  - models/{archivo}")
-        return None
+        return None, None
     
     modelo = keras.models.load_model(ruta)
+    
+    # Detectar IMG_SIZE desde la capa de entrada del modelo
+    img_size = tuple(modelo.input_shape[1:3])
+    
     print(f"Modelo cargado desde: {ruta}")
-    return modelo
+    print(f"Tamaño de imagen detectado: {img_size}")
+    return modelo, img_size
 
 
 # ============= PREDICCIÓN SIMPLE =============
-def predecir_imagen(ruta_imagen, modelo, mostrar=True):
+def predecir_imagen(ruta_imagen, modelo, img_size, mostrar=True):
     """Predice la clase de una imagen"""
     if not os.path.exists(ruta_imagen):
         print(f"No se encontró la imagen: {ruta_imagen}")
         return None, None, None
     
     # Cargar y preprocesar
-    img = load_img(ruta_imagen, target_size=IMG_SIZE)
+    img = load_img(ruta_imagen, target_size=img_size)
     img_array = img_to_array(img)
     img_array = img_array.astype('float32') / 255.0
     img_array = np.expand_dims(img_array, axis=0)
@@ -82,14 +87,14 @@ def predecir_imagen(ruta_imagen, modelo, mostrar=True):
 
 
 # ============= DETECCIÓN MÚLTIPLE =============
-def detectar_multiples_animales(ruta_imagen, modelo, umbral=0.3, mostrar=True):
+def detectar_multiples_animales(ruta_imagen, modelo, img_size, umbral=0.3, mostrar=True):
     """Detecta múltiples animales con umbral de probabilidad"""
     if not os.path.exists(ruta_imagen):
         print(f" No se encontró la imagen: {ruta_imagen}")
         return []
     
     # Cargar y preprocesar
-    img = load_img(ruta_imagen, target_size=IMG_SIZE)
+    img = load_img(ruta_imagen, target_size=img_size)
     img_array = img_to_array(img)
     img_array = img_array.astype('float32') / 255.0
     img_array = np.expand_dims(img_array, axis=0)
@@ -148,14 +153,14 @@ def detectar_multiples_animales(ruta_imagen, modelo, umbral=0.3, mostrar=True):
 
 
 # ============= PREDICCIÓN POR LOTES =============
-def predecir_carpeta(ruta_carpeta, modelo, mostrar_imagenes=False):
+def predecir_carpeta(ruta_carpeta, modelo, img_size, mostrar_imagenes=False):
     """Predice todas las imágenes en una carpeta"""
     if not os.path.exists(ruta_carpeta):
         print(f" No se encontró la carpeta: {ruta_carpeta}")
         return
     
     archivos = [f for f in os.listdir(ruta_carpeta) 
-                if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
     
     if not archivos:
         print(" No se encontraron imágenes en la carpeta")
@@ -166,7 +171,7 @@ def predecir_carpeta(ruta_carpeta, modelo, mostrar_imagenes=False):
     
     for archivo in archivos:
         ruta = os.path.join(ruta_carpeta, archivo)
-        img = load_img(ruta, target_size=IMG_SIZE)
+        img = load_img(ruta, target_size=img_size)
         img_array = img_to_array(img)
         img_array = img_array.astype('float32') / 255.0
         img_array = np.expand_dims(img_array, axis=0)
@@ -182,7 +187,7 @@ def predecir_carpeta(ruta_carpeta, modelo, mostrar_imagenes=False):
 
 
 # ============= MENÚ INTERACTIVO =============
-def menu_interactivo(modelo):
+def menu_interactivo(modelo, img_size):
     """Menú para usar el detector"""
     while True:
         print("\n" + "="*60)
@@ -198,20 +203,20 @@ def menu_interactivo(modelo):
         
         if opcion == '1':
             ruta = input("\n Ruta de la imagen: ").strip()
-            predecir_imagen(ruta, modelo)
+            predecir_imagen(ruta, modelo, img_size)
             
         elif opcion == '2':
             ruta = input("\n Ruta de la imagen: ").strip()
             try:
                 umbral = float(input("🎚️  Umbral (0.0-1.0, recomendado 0.3): ").strip())
-                detectar_multiples_animales(ruta, modelo, umbral)
+                detectar_multiples_animales(ruta, modelo, img_size, umbral)
             except ValueError:
                 print(" Umbral inválido, usando 0.3")
-                detectar_multiples_animales(ruta, modelo, 0.3)
+                detectar_multiples_animales(ruta, modelo, img_size, 0.3)
                 
         elif opcion == '3':
             ruta = input("\n Ruta de la carpeta: ").strip()
-            predecir_carpeta(ruta, modelo)
+            predecir_carpeta(ruta, modelo, img_size)
             
         elif opcion == '4':
             print("\n ¡Hasta luego!")
@@ -227,10 +232,10 @@ if __name__ == "__main__":
     print("="*60)
     
     # Cargar modelo
-    modelo = cargar_modelo()
+    modelo, img_size = cargar_modelo()
     
     if modelo is None:
         print("\n No se pudo cargar el modelo. Asegúrate de haberlo entrenado primero.")
     else:
         # Iniciar menú interactivo
-        menu_interactivo(modelo)
+        menu_interactivo(modelo, img_size)

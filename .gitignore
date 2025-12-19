@@ -5,3 +5,8 @@ beetle_cocci.rar
 Turtle_Tortoise.rar
 mejor_modelo_mejorado.h5
 modelo_mejorado_completo.h5
+CNN/models/*.h5
+CNN/models/*.keras
+CNN/models/*.weights.h5
+CNN/Data/dataset2/*.zip
+*.zip

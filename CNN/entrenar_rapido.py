@@ -21,11 +21,11 @@ DATA_DIR = r'Data'
 OUTPUT_DIR = r'sources/rapido'  # Carpeta para guardar imágenes generadas
 
 CATEGORIAS = {
-    'perro': os.path.join(DATA_DIR, 'perro'),
-    'gato': os.path.join(DATA_DIR, 'gato'),
-    'hormiga': os.path.join(DATA_DIR, 'animals', 'hormiga'),
-    'mariquita': os.path.join(DATA_DIR, 'animals', 'mariquita'),
-    'tortuga': os.path.join(DATA_DIR, 'Turtle_Tortoise')
+    'perro': os.path.join(DATA_DIR, 'dataset2', 'perros'),
+    'gato': os.path.join(DATA_DIR, 'dataset2', 'gatos'),
+    'hormiga': os.path.join(DATA_DIR, 'dataset2', 'hormigas'),
+    'mariquita': os.path.join(DATA_DIR, 'dataset2', 'mariquitas'),
+    'tortuga': os.path.join(DATA_DIR, 'dataset2', 'tortugas')
 }
 CLASS_NAMES = list(CATEGORIAS.keys())
 NUM_CLASSES = len(CLASS_NAMES)

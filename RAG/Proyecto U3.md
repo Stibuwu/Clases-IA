@@ -197,7 +197,7 @@ reposts:  Media = 2,495  | Desv. Est = 1,454
 ✗ Duplicados en texto: 4,620 (92.40%)
 ```
 
-**⚠️ Hallazgo Crítico**: El 92.4% de los textos están duplicados.
+**Hallazgo Crítico**: El 92.4% de los textos están duplicados.
 
 **Implicaciones:**
 1. **Dataset sintético con plantillas limitadas**: Los 5000 registros se generaron a partir de ~380 textos únicos
